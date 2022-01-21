@@ -1,3 +1,5 @@
+# Only changed Q6 about Academy dinosaur
+
 USE sakila;
 
 -- Q1 Write a query to display for each store its store ID, city, and country.
@@ -54,6 +56,21 @@ GROUP BY c.name
 ORDER BY total_revenue DESC
 LIMIT 5;
 
+SELECT ca.name, sum(p.amount) AS gross_revenue
+FROM category ca
+JOIN film_category fc
+USING(category_id)
+JOIN inventory inv
+USING(film_id)
+JOIN rental r
+USING(inventory_id)
+JOIN payment p
+USING(rental_id)
+GROUP BY ca.name
+ORDER BY gross_revenue DESC
+LIMIT 5;
+
+
 -- Q6 Is "Academy Dinosaur" available for rent from Store 1?
 
 SELECT*
@@ -66,13 +83,22 @@ WHERE i.store_id = '1'
 GROUP BY (i.inventory_id)
 HAVING f.title = 'Academy Dinosaur')inventory
 JOIN
-(SELECT i.inventory_id, COUNT(i.film_id)
+(SELECT i.inventory_id, COUNT(i.film_id) AS how_many_times_rented
 FROM sakila.inventory i
 JOIN sakila.rental r
 ON i.inventory_id = r.inventory_id
-WHERE (r.return_date IS NULL)
+WHERE (r.return_date IS NOT NULL)
 GROUP BY (i.inventory_id))rented_out
+USING (inventory_id)
+JOIN
+(SELECT i.inventory_id, COUNT(i.film_id) AS how_many_times_returned
+FROM sakila.inventory i
+JOIN sakila.rental r
+ON i.inventory_id = r.inventory_id
+WHERE (r.rental_date IS NOT NULL)
+GROUP BY (i.inventory_id))returned
 USING (inventory_id);
+
 
 -- 'Academy Dinosaur' isn't available for rent from store 1
 
@@ -100,6 +126,7 @@ JOIN sakila.film_actor fa2
 ON (fa1.film_id = fa2.film_id) AND (fa1.actor_id <> fa2.actor_id)
 WHERE fa1.actor_id > fa2.actor_id
 ORDER BY fa1.film_id ASC;
+
 
 -- Q8 Get all pairs of customers that have rented the same film more than 3 times.
 -- Haven't yet figured out how to count the pairs :( 
